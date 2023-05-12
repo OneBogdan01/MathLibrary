@@ -51,8 +51,39 @@ struct vec3
 		z = z * m;
 	}
 };
-
-struct mat2
+//matrix inspired by this https://www.youtube.com/watch?v=zxwLN2blwbQ
+struct mat3x3
 {
-	float cell[4];//something
+	float m[3][3]{};
+	//defaults to identity matrix
+	mat3x3()
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				if (i == j)
+				{
+					m[i][j] = 1;
+				}
+				else
+				{
+					m[i][j] = 0;
+				}
+			}
+		}
+
+
+	}
+
+	//row vector multiplication
+	static void rowVectorMultiplication(const mat3x3& m, vec3& a)
+	{
+		a.x = a.x * m.m[0][0] + a.y * m.m[1][0] + a.z * m.m[2][0];
+		a.y = a.y * m.m[0][1] + a.y * m.m[1][1] + a.z * m.m[2][1];
+		a.z = a.z * m.m[0][2] + a.y * m.m[1][2] + a.z * m.m[2][2];
+	}
+
+
+
 };
