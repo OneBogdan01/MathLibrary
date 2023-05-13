@@ -51,10 +51,10 @@ struct vec3
 		z = z * m;
 	}
 };
-//matrix inspired by this https://www.youtube.com/watch?v=zxwLN2blwbQ
 struct mat3x3
 {
 	float m[3][3]{};
+
 	//defaults to identity matrix
 	mat3x3()
 	{
@@ -75,7 +75,20 @@ struct mat3x3
 
 
 	}
-
+	bool operator ==(const mat3x3& a) const
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				if (!MathFunctions::areEqualRel(a.m[i][j], m[i][j]))
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 	//row vector multiplication
 	static void rowVectorMultiplication(const mat3x3& m, vec3& a)
 	{
@@ -83,7 +96,17 @@ struct mat3x3
 		a.y = a.y * m.m[0][1] + a.y * m.m[1][1] + a.z * m.m[2][1];
 		a.z = a.z * m.m[0][2] + a.y * m.m[1][2] + a.z * m.m[2][2];
 	}
-
-
+	static void transpose(mat3x3& m)
+	{
+		mat3x3 newM = {};
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				newM.m[j][i] = m.m[i][j];
+			}
+		}
+		m = newM;
+	}
 
 };
