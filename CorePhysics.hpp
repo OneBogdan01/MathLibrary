@@ -89,6 +89,26 @@ struct mat3x3
 		}
 		return true;
 	}
+	mat3x3 operator *(const mat3x3& a) const
+	{
+		mat3x3 result;
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				float sum = 0;
+				for (int f = 0; f < 3; f++)
+					sum += m[i][f] * a.m[f][j];
+
+
+				result.m[i][j] = sum;
+			}
+		}
+		return result;
+
+	}
+
+
 	//row vector multiplication
 	static void rowVectorMultiplication(const mat3x3& m, vec3& a)
 	{
