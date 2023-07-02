@@ -130,3 +130,74 @@ struct mat3x3
 	}
 
 };
+struct mat2x2
+{
+	float m[2][2] = {};
+	//defaults to identity matrix
+	mat2x2()
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			for (int j = 0; j < 2; j++)
+			{
+				if (i == j)
+				{
+					m[i][j] = 1;
+				}
+				else
+				{
+					m[i][j] = 0;
+				}
+			}
+		}
+
+
+	}
+	mat2x2 operator *(const mat2x2& a) const
+	{
+		mat2x2 result;
+		for (int i = 0; i < 2; i++)
+		{
+			for (int j = 0; j < 2; j++)
+			{
+				float sum = 0;
+				for (int f = 0; f < 2; f++)
+					sum += m[i][f] * a.m[f][j];
+
+
+				result.m[i][j] = sum;
+			}
+		}
+		return result;
+
+	}
+	bool operator ==(const mat2x2& a) const
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			for (int j = 0; j < 2; j++)
+			{
+				if (!MathFunctions::areEqualRel(a.m[i][j], m[i][j]))
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	//Returns the corresponding matrix to the 2D vector rotated by the angle in the mat variable
+	//Note that angle is in radians and the rotation is positive counterclockwise
+	static void Rotate2D(float angle, mat2x2& mat)
+	{
+		mat2x2 newM = {};
+
+		//x axis
+		newM.m[0][0] = cos(angle);
+		newM.m[0][1] = sin(angle);
+		//y axis
+		newM.m[1][0] = -sin(angle);
+		newM.m[1][1] = cos(angle);
+
+		mat = newM;
+	}
+};
