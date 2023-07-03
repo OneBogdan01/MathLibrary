@@ -1,5 +1,9 @@
 #pragma once
 #include "MathFunctions.hpp"
+#include <algorithm>
+
+
+
 struct vec2
 {
 	float x, y;
@@ -33,6 +37,14 @@ struct vec3
 	vec3 operator +(const vec3& a) const { return vec3{ x + a.x, y + a.y, z + a.z }; }
 	vec3 operator -(const vec3& a) const { return vec3{ x - a.x, y - a.y, z - a.z }; }
 	vec3 operator *(const float a) const { return vec3{ x * a, y * a, z * a }; }
+	float operator [](const int a) const
+	{
+		if (a == 0)return x;
+		if (a == 1)return y;
+
+		return z;
+	}
+
 	bool operator ==(const vec3& a) const { return MathFunctions::areEqualRel(x, a.x) && MathFunctions::areEqualRel(y, a.y) && MathFunctions::areEqualRel(z, a.z); }
 	float dot(const vec3& a)const { return x * a.x + y * a.y + z * a.z; }
 	vec3 cross(const vec3& a) { return vec3{ y * a.z - z * a.y, z * a.x - x * a.z, y * a.z - z * a.y }; }
@@ -107,7 +119,50 @@ struct mat3x3
 		return result;
 
 	}
+	/// <summary>
+	/// Stores the matrix for the specified 3D rotation in mat
+	/// </summary>
+	/// <param name="angle_to_rotate">the angle in radians</param>
+	/// <param name="axisToRotate">Axis which we are going to rotate around</param>
+	/// <param name="mat">where the rotation gets stored</param>
+	static void Rotate3D(const float angle_to_rotate, const vec3& axisToRotate, mat3x3& mat)
+	{
+		mat3x3 newM;
+		const float COS_SIN_COMBINATIONS[3] = { cosf(angle_to_rotate),sinf(angle_to_rotate) ,-sinf(angle_to_rotate) };
+		float SECONDARY_AXIS[4] = { 1,axisToRotate[2] ,axisToRotate[1],axisToRotate[0] };
 
+		for (int i = 0; i < 3; i++) {
+			const float axis = axisToRotate[i];
+			for (int j = 0; j < 3; j++) {
+				const int index = (3 - i + j) % 3;
+				newM.m[i][j] = axis * axisToRotate[j] * (1 - cos(angle_to_rotate)) + COS_SIN_COMBINATIONS[index] * SECONDARY_AXIS[index];
+			}
+			if (i == 1)
+			{
+				std::swap(SECONDARY_AXIS[1], SECONDARY_AXIS[3]);
+				std::swap(SECONDARY_AXIS[2], SECONDARY_AXIS[3]);
+			}
+			else
+			{
+				std::swap(SECONDARY_AXIS[1], SECONDARY_AXIS[2]);
+				std::swap(SECONDARY_AXIS[1], SECONDARY_AXIS[3]);
+			}
+		}
+		mat = newM;
+
+	}
+	static mat3x3 RoundToInt(const mat3x3& mat)
+	{
+		mat3x3 newM;
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				newM.m[i][j] = round(mat.m[i][j] * 1000);
+			}
+		}
+		return  newM;
+	}
 
 	//row vector multiplication
 	static void rowVectorMultiplication(const mat3x3& m, vec3& a)
