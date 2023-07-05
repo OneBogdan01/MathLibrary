@@ -63,6 +63,77 @@ struct vec3
 		z = z * m;
 	}
 };
+struct mat2x2
+{
+	float m[2][2] = {};
+	//defaults to identity matrix
+	mat2x2()
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			for (int j = 0; j < 2; j++)
+			{
+				if (i == j)
+				{
+					m[i][j] = 1;
+				}
+				else
+				{
+					m[i][j] = 0;
+				}
+			}
+		}
+
+
+	}
+	mat2x2 operator *(const mat2x2& a) const
+	{
+		mat2x2 result;
+		for (int i = 0; i < 2; i++)
+		{
+			for (int j = 0; j < 2; j++)
+			{
+				float sum = 0;
+				for (int f = 0; f < 2; f++)
+					sum += m[i][f] * a.m[f][j];
+
+
+				result.m[i][j] = sum;
+			}
+		}
+		return result;
+
+	}
+	bool operator ==(const mat2x2& a) const
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			for (int j = 0; j < 2; j++)
+			{
+				if (!MathFunctions::areEqualRel(a.m[i][j], m[i][j]))
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	//Returns the corresponding matrix to the 2D vector rotated by the angle in the mat variable
+	//Note that angle is in radians and the rotation is positive counterclockwise
+	static void Rotate2D(float angle, mat2x2& mat)
+	{
+		mat2x2 newM = {};
+
+		//x axis
+		newM.m[0][0] = cos(angle);
+		newM.m[0][1] = sin(angle);
+		//y axis
+		newM.m[1][0] = -sin(angle);
+		newM.m[1][1] = cos(angle);
+
+		mat = newM;
+	}
+};
 struct mat3x3
 {
 	float m[3][3]{};
@@ -164,7 +235,12 @@ struct mat3x3
 		return  newM;
 	}
 
-	//row vector multiplication
+	/// <summary>
+	/// Multiplies the matrix m with the vector a from left to right.
+	///	Results a 1x3 matrix (which is the vec3)
+	/// </summary>
+	/// <param name="m"></param>
+	/// <param name="a"></param>
 	static void rowVectorMultiplication(const mat3x3& m, vec3& a)
 	{
 		a.x = a.x * m.m[0][0] + a.y * m.m[1][0] + a.z * m.m[2][0];
@@ -183,76 +259,34 @@ struct mat3x3
 		}
 		m = newM;
 	}
-
-};
-struct mat2x2
-{
-	float m[2][2] = {};
-	//defaults to identity matrix
-	mat2x2()
+	/// <summary>
+	/// Scales uniformly along all axis by s
+	/// </summary>
+	/// <param name="m"></param>
+	/// <param name="s"></param>
+	static void Scale(mat3x3& m, const float s)
 	{
-		for (int i = 0; i < 2; i++)
+		m = mat3x3();
+		for (int i = 0; i < 3; i++)
 		{
-			for (int j = 0; j < 2; j++)
+			m.m[i][i] = s;
+		}
+	}
+	static void ScaleAlongAxis(mat3x3& m, const float& s, const vec3& axis)
+	{
+		m = mat3x3();
+		const float k = s - 1;
+		for (int i = 0; i < 3; i++)
+		{
+
+			for (int j = 0; j < 3; j++)
 			{
+				m.m[i][j] = axis[i] * axis[j] * k;
 				if (i == j)
-				{
-					m[i][j] = 1;
-				}
-				else
-				{
-					m[i][j] = 0;
-				}
+					m.m[i][j]++;
 			}
 		}
-
-
 	}
-	mat2x2 operator *(const mat2x2& a) const
-	{
-		mat2x2 result;
-		for (int i = 0; i < 2; i++)
-		{
-			for (int j = 0; j < 2; j++)
-			{
-				float sum = 0;
-				for (int f = 0; f < 2; f++)
-					sum += m[i][f] * a.m[f][j];
 
-
-				result.m[i][j] = sum;
-			}
-		}
-		return result;
-
-	}
-	bool operator ==(const mat2x2& a) const
-	{
-		for (int i = 0; i < 2; i++)
-		{
-			for (int j = 0; j < 2; j++)
-			{
-				if (!MathFunctions::areEqualRel(a.m[i][j], m[i][j]))
-				{
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-	//Returns the corresponding matrix to the 2D vector rotated by the angle in the mat variable
-	//Note that angle is in radians and the rotation is positive counterclockwise
-	static void Rotate2D(float angle, mat2x2& mat)
-	{
-		mat2x2 newM = {};
-
-		//x axis
-		newM.m[0][0] = cos(angle);
-		newM.m[0][1] = sin(angle);
-		//y axis
-		newM.m[1][0] = -sin(angle);
-		newM.m[1][1] = cos(angle);
-
-		mat = newM;
-	}
 };
+
