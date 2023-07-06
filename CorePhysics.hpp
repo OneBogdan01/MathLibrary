@@ -287,6 +287,24 @@ struct mat3x3
 			}
 		}
 	}
+	/// <summary>
+	/// Does the same as the scaling but it uses a scaling factor of 0.
+	/// </summary>
+	/// <param name="m"></param>
+	/// <param name="axis"></param>
+	static void OrthographicProjection(mat3x3& m, const vec3& axis)
+	{
+		ScaleAlongAxis(m, 0, axis);
+	}
+	/// <summary>
+	/// Does the same as scaling but it uses a scaling of -1.
+	/// </summary>
+	/// <param name="m"></param>
+	/// <param name="axis"></param>
+	static void Reflection(mat3x3& m, const vec3& axis)
+	{
+		ScaleAlongAxis(m, -1, axis);
+	}
 
 };
 
