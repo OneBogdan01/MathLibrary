@@ -334,24 +334,25 @@ struct mat3x3
 				mat.m[0][0] * mat.m[1][2] * mat.m[2][1]
 				);
 	}
-	static float min(const mat3x3& mat, int i, int j)
+	static float min(const mat3x3& mat, const int i, const int j)
 	{
 		mat2x2 minor;
 		int x = 0, y = 0;
-		while (x != 2) {
-			if (x != i && y != j) {
-				minor.m[x][y++] = mat.m[i][j++];
-				if (y == 2)
-				{
-					y = 0;
-					x++;
+
+		for (int c = 0; c < 3; c++) {
+			for (int d = 0; d < 3; d++) {
+				if (c != i && d != j) {
+					minor.m[x][y++] = mat.m[c][d];
+					if (y == 2)
+					{
+						y = 0;
+						x++;
+					}
+
 				}
-				if (j == 3)
-				{
-					j = 0;
-					i++;
-				}
+
 			}
+
 		}
 
 		return mat2x2::det(minor);
@@ -371,6 +372,7 @@ struct mat3x3
 
 			}
 		}
+		transpose(newM);
 		return  newM;
 	}
 	static mat3x3 inv(const mat3x3& mat)
