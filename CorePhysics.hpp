@@ -133,6 +133,11 @@ struct mat2x2
 
 		mat = newM;
 	}
+	static float det(const mat2x2& mat)
+	{
+		return mat.m[0][0] * mat.m[1][1] - mat.m[0][1] * mat.m[1][0];
+	}
+
 };
 struct mat3x3
 {
@@ -185,6 +190,20 @@ struct mat3x3
 
 
 				result.m[i][j] = sum;
+			}
+		}
+		return result;
+
+	}
+	mat3x3 operator /(const float d) const
+	{
+		mat3x3 result;
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				result.m[i][j] = m[i][j] / d;
+
 			}
 		}
 		return result;
@@ -305,6 +324,60 @@ struct mat3x3
 	{
 		ScaleAlongAxis(m, -1, axis);
 	}
+	static float det(const mat3x3& mat)
+	{
+		return (mat.m[0][0] * mat.m[1][1] * mat.m[2][2] +
+			mat.m[1][0] * mat.m[2][1] * mat.m[0][2] +
+			mat.m[0][1] * mat.m[1][2] * mat.m[2][0]) -
+			(mat.m[0][2] * mat.m[1][1] * mat.m[0][2] +
+				mat.m[0][1] * mat.m[1][0] * mat.m[2][2] +
+				mat.m[0][0] * mat.m[1][2] * mat.m[2][1]
+				);
+	}
+	static float min(const mat3x3& mat, int i, int j)
+	{
+		mat2x2 minor;
+		int x = 0, y = 0;
+		while (x != 2) {
+			if (x != i && y != j) {
+				minor.m[x][y++] = mat.m[i][j++];
+				if (y == 2)
+				{
+					y = 0;
+					x++;
+				}
+				if (j == 3)
+				{
+					j = 0;
+					i++;
+				}
+			}
+		}
 
+		return mat2x2::det(minor);
+	}
+
+	static mat3x3 adj(const mat3x3& mat)
+	{
+		mat3x3 newM;
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				if ((i + j) % 2 == 0)
+					newM.m[i][j] = min(mat, i, j);
+				else
+					newM.m[i][j] = -min(mat, i, j);
+
+			}
+		}
+		return  newM;
+	}
+	static mat3x3 inv(const mat3x3& mat)
+	{
+		const float de = det(mat);
+		return adj(mat) / de;
+
+	}
 };
 
