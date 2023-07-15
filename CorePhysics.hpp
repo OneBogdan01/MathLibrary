@@ -6,7 +6,12 @@
 
 struct vec2
 {
-	float x, y;
+	union {
+		struct {
+			float x, y;
+		};
+		float cell[2];
+	};
 	vec2() : x(0), y(0) {}
 	vec2(const float val) :x(val), y(val) {}
 	vec2(const float x, const float y) :x(x), y(y) {}
@@ -30,20 +35,20 @@ struct vec2
 };
 struct vec3
 {
-	float x, y, z;
+	union {
+		struct {
+			float x, y, z;
+		};
+		float cell[3];
+	};
 	vec3() : x(0), y(0), z(0) {}
 	vec3(const float val) :x(val), y(val), z(val) {}
 	vec3(const float x, const float y, const float z) :x(x), y(y), z(z) {}
 	vec3 operator +(const vec3& a) const { return vec3{ x + a.x, y + a.y, z + a.z }; }
 	vec3 operator -(const vec3& a) const { return vec3{ x - a.x, y - a.y, z - a.z }; }
+	vec3 operator -() const { return vec3{ -x,  -y,  -z }; }
 	vec3 operator *(const float a) const { return vec3{ x * a, y * a, z * a }; }
-	float operator [](const int a) const
-	{
-		if (a == 0)return x;
-		if (a == 1)return y;
 
-		return z;
-	}
 
 	bool operator ==(const vec3& a) const { return MathFunctions::areEqualRel(x, a.x) && MathFunctions::areEqualRel(y, a.y) && MathFunctions::areEqualRel(z, a.z); }
 	float dot(const vec3& a)const { return x * a.x + y * a.y + z * a.z; }
@@ -195,6 +200,7 @@ struct mat3x3
 		return result;
 
 	}
+
 	mat3x3 operator /(const float d) const
 	{
 		mat3x3 result;
@@ -219,13 +225,13 @@ struct mat3x3
 	{
 		mat3x3 newM;
 		const float COS_SIN_COMBINATIONS[3] = { cosf(angle_to_rotate),sinf(angle_to_rotate) ,-sinf(angle_to_rotate) };
-		float SECONDARY_AXIS[4] = { 1,axisToRotate[2] ,axisToRotate[1],axisToRotate[0] };
+		float SECONDARY_AXIS[4] = { 1,axisToRotate.cell[2] ,axisToRotate.cell[1],axisToRotate.cell[0] };
 
 		for (int i = 0; i < 3; i++) {
-			const float axis = axisToRotate[i];
+			const float axis = axisToRotate.cell[i];
 			for (int j = 0; j < 3; j++) {
 				const int index = (3 - i + j) % 3;
-				newM.m[i][j] = axis * axisToRotate[j] * (1 - cos(angle_to_rotate)) + COS_SIN_COMBINATIONS[index] * SECONDARY_AXIS[index];
+				newM.m[i][j] = axis * axisToRotate.cell[j] * (1 - cos(angle_to_rotate)) + COS_SIN_COMBINATIONS[index] * SECONDARY_AXIS[index];
 			}
 			if (i == 1)
 			{
@@ -254,6 +260,7 @@ struct mat3x3
 		return  newM;
 	}
 
+
 	/// <summary>
 	/// Multiplies the matrix m with the vector a from left to right.
 	///	Results a 1x3 matrix (which is the vec3)
@@ -268,7 +275,7 @@ struct mat3x3
 	}
 	static void transpose(mat3x3& m)
 	{
-		mat3x3 newM = {};
+		mat3x3 newM;
 		for (int i = 0; i < 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
@@ -300,7 +307,7 @@ struct mat3x3
 
 			for (int j = 0; j < 3; j++)
 			{
-				m.m[i][j] = axis[i] * axis[j] * k;
+				m.m[i][j] = axis.cell[i] * axis.cell[j] * k;
 				if (i == j)
 					m.m[i][j]++;
 			}
@@ -326,13 +333,10 @@ struct mat3x3
 	}
 	static float det(const mat3x3& mat)
 	{
-		return (mat.m[0][0] * mat.m[1][1] * mat.m[2][2] +
-			mat.m[1][0] * mat.m[2][1] * mat.m[0][2] +
-			mat.m[0][1] * mat.m[1][2] * mat.m[2][0]) -
-			(mat.m[0][2] * mat.m[1][1] * mat.m[0][2] +
+		return mat.m[0][0] * mat.m[1][1] * mat.m[2][2] + mat.m[1][0] * mat.m[2][1] * mat.m[0][2] + mat.m[0][1] * mat.m[1][2] * mat.m[2][0] -
+			(mat.m[0][2] * mat.m[1][1] * mat.m[2][0] +
 				mat.m[0][1] * mat.m[1][0] * mat.m[2][2] +
-				mat.m[0][0] * mat.m[1][2] * mat.m[2][1]
-				);
+				mat.m[0][0] * mat.m[1][2] * mat.m[2][1]);
 	}
 	static float min(const mat3x3& mat, const int i, const int j)
 	{
@@ -378,8 +382,103 @@ struct mat3x3
 	static mat3x3 inv(const mat3x3& mat)
 	{
 		const float de = det(mat);
-		return adj(mat) / de;
+		return  adj(mat) / de;
 
 	}
 };
 
+struct mat4x4
+{
+	float m[4][4]{};
+
+	//defaults to identity matrix
+	mat4x4()
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				if (i == j)
+				{
+					m[i][j] = 1;
+				}
+				else
+				{
+					m[i][j] = 0;
+				}
+			}
+		}
+
+
+	}
+	bool operator ==(const mat4x4& a) const
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				if (!MathFunctions::areEqualRel(a.m[i][j], m[i][j]))
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	static mat4x4 multiplyTranslationLinear(const mat3x3& linearTrans, const vec3& translation)
+	{
+		mat4x4 mat;
+
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+
+				mat.m[i][j] = linearTrans.m[i][j];
+
+				mat.m[3][i] += translation.cell[i] * linearTrans.m[j][i];
+
+			}
+		}
+		return mat;
+	}
+
+
+
+	static mat3x3 GetLinearTransformation(const mat4x4& mat)
+	{
+		mat3x3 M;
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				M.m[i][j] = mat.m[i][j];
+			}
+		}
+		return M;
+	}
+
+	static vec3 GetTranslation(const mat4x4& mat)
+	{
+		vec3 v;
+
+		for (int j = 0; j < 3; j++)
+		{
+			v.cell[j] = mat.m[3][j];
+		}
+
+		return v;
+	}
+	static mat4x4 RoundToInt(const mat4x4& mat)
+	{
+		mat4x4 newM;
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				newM.m[i][j] = round(mat.m[i][j] * 1000);
+			}
+		}
+		return  newM;
+	}
+};
