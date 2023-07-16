@@ -12,6 +12,9 @@ struct vec2
 		};
 		float cell[2];
 	};
+	float& operator [] (const int x) { return cell[x]; }
+	float operator [] (const int& x) const { return cell[x]; }
+
 	vec2() : x(0), y(0) {}
 	vec2(const float val) :x(val), y(val) {}
 	vec2(const float x, const float y) :x(x), y(y) {}
@@ -41,6 +44,9 @@ struct vec3
 		};
 		float cell[3];
 	};
+	float& operator [] (const int x) { return cell[x]; }
+	float operator [] (const int& x) const { return cell[x]; }
+
 	vec3() : x(0), y(0), z(0) {}
 	vec3(const float val) :x(val), y(val), z(val) {}
 	vec3(const float x, const float y, const float z) :x(x), y(y), z(z) {}
@@ -48,6 +54,7 @@ struct vec3
 	vec3 operator -(const vec3& a) const { return vec3{ x - a.x, y - a.y, z - a.z }; }
 	vec3 operator -() const { return vec3{ -x,  -y,  -z }; }
 	vec3 operator *(const float a) const { return vec3{ x * a, y * a, z * a }; }
+	vec3 operator /(const float a) const { return vec3{ x / a, y / a, z / a }; }
 
 
 	bool operator ==(const vec3& a) const { return MathFunctions::areEqualRel(x, a.x) && MathFunctions::areEqualRel(y, a.y) && MathFunctions::areEqualRel(z, a.z); }
@@ -225,13 +232,13 @@ struct mat3x3
 	{
 		mat3x3 newM;
 		const float COS_SIN_COMBINATIONS[3] = { cosf(angle_to_rotate),sinf(angle_to_rotate) ,-sinf(angle_to_rotate) };
-		float SECONDARY_AXIS[4] = { 1,axisToRotate.cell[2] ,axisToRotate.cell[1],axisToRotate.cell[0] };
+		float SECONDARY_AXIS[4] = { 1,axisToRotate[2] ,axisToRotate[1],axisToRotate[0] };
 
 		for (int i = 0; i < 3; i++) {
-			const float axis = axisToRotate.cell[i];
+			const float axis = axisToRotate[i];
 			for (int j = 0; j < 3; j++) {
 				const int index = (3 - i + j) % 3;
-				newM.m[i][j] = axis * axisToRotate.cell[j] * (1 - cos(angle_to_rotate)) + COS_SIN_COMBINATIONS[index] * SECONDARY_AXIS[index];
+				newM.m[i][j] = axis * axisToRotate[j] * (1 - cos(angle_to_rotate)) + COS_SIN_COMBINATIONS[index] * SECONDARY_AXIS[index];
 			}
 			if (i == 1)
 			{
@@ -307,7 +314,7 @@ struct mat3x3
 
 			for (int j = 0; j < 3; j++)
 			{
-				m.m[i][j] = axis.cell[i] * axis.cell[j] * k;
+				m.m[i][j] = axis[i] * axis[j] * k;
 				if (i == j)
 					m.m[i][j]++;
 			}
@@ -436,15 +443,61 @@ struct mat4x4
 
 				mat.m[i][j] = linearTrans.m[i][j];
 
-				mat.m[3][i] += translation.cell[i] * linearTrans.m[j][i];
+				mat.m[3][i] += translation[j] * linearTrans.m[j][i];
 
 			}
 		}
 		return mat;
 	}
+	static mat4x4 constructLinearTransformation(const mat3x3& linearTrans, const vec3& translation)
+	{
+		mat4x4 mat;
+
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+
+				mat.m[i][j] = linearTrans.m[i][j];
+
+			}
+			mat.m[3][i] = translation[i];
+		}
+		return mat;
+	}
+
+	static mat4x4 PerspectiveProjection(const vec3& axis, const float distance)
+	{
+		mat4x4 mat;
+		mat.m[3][3] = 0;
+		for (int i = 0; i < 3; i++)
+		{
+			mat.m[i][3] = axis[i] / distance;
+		}
+		return mat;
+	}
+	static vec3 PerspectiveProjectionToVec3(const mat4x4& mat, const vec3& v)
+	{
+		vec3 newV;
+		for (int i = 0; i < 3; i++)
+		{
+			float sum = 0;
+			for (int j = 0; j < 3; j++)
+			{
+				sum += mat.m[j][i] * v[j];
+			}
+			newV[i] = sum;
+		}
+		float sum = 0;
+
+		for (int i = 0; i < 3; i++)
+		{
+			sum += mat.m[i][3] * v[i];
+		}
 
 
-
+		return newV / sum;
+	}
 	static mat3x3 GetLinearTransformation(const mat4x4& mat)
 	{
 		mat3x3 M;
@@ -464,7 +517,7 @@ struct mat4x4
 
 		for (int j = 0; j < 3; j++)
 		{
-			v.cell[j] = mat.m[3][j];
+			v[j] = mat.m[3][j];
 		}
 
 		return v;
