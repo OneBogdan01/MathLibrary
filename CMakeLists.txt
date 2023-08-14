@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION 3.7)
 
 
 project(MathLibrary VERSION 1.0 DESCRIPTION "My C++ Math library" LANGUAGES CXX)
-
+#Fix for windows builds
+if(MSVC)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+endif()
 
 set( INC_FILES
 	CorePhysics.hpp
