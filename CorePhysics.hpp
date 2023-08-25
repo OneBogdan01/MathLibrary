@@ -13,11 +13,11 @@ struct vec2
 		float cell[2];
 	};
 	float& operator [] (const int x) { return cell[x]; }
-	float operator [] (const int& x) const { return cell[x]; }
+	float operator [] (const int x) const { return cell[x]; }
 
 	vec2() : x(0), y(0) {}
-	vec2(const float val) :x(val), y(val) {}
-	vec2(const float x, const float y) :x(x), y(y) {}
+	vec2(const float& val) :x(val), y(val) {}
+	vec2(const float& x, const float& y) :x(x), y(y) {}
 	vec2 operator +(const vec2& a) const { return vec2{ x + a.x,y + a.y }; }
 	vec2 operator -(const vec2& a) const { return vec2{ x - a.x,y - a.y }; }
 	vec2 operator *(const float a) const { return vec2{ x * a,y * a }; }
@@ -48,7 +48,7 @@ struct vec3
 		float cell[3];
 	};
 	float& operator [] (const int x) { return cell[x]; }
-	float operator [] (const int& x) const { return cell[x]; }
+	float operator [] (const int x) const { return cell[x]; }
 
 	vec3() : x(0), y(0), z(0) {}
 	vec3(const float val) :x(val), y(val), z(val) {}
