@@ -59,9 +59,10 @@ struct vec3
 	vec3 operator -() const { return vec3{ -x,  -y,  -z }; }
 	vec3 operator *(const float a) const { return vec3{ x * a, y * a, z * a }; }
 	vec3 operator /(const float a) const { return vec3{ x / a, y / a, z / a }; }
+	void operator =(const vec3& a) { x = a.x; y = a.y; z = a.z; }
 
-
-	bool operator ==(const vec3& a) const { return MathFunctions::areEqualRel(x, a.x) && MathFunctions::areEqualRel(y, a.y) && MathFunctions::areEqualRel(z, a.z); }
+	const float tolerance = 0.01f;
+	bool operator ==(const vec3& a) const { return MathFunctions::areEqualRel(x, a.x, tolerance) && MathFunctions::areEqualRel(y, a.y, tolerance) && MathFunctions::areEqualRel(z, a.z, tolerance); }
 	float dot(const vec3& a)const { return x * a.x + y * a.y + z * a.z; }
 	vec3 cross(const vec3& a) { return vec3{ y * a.z - z * a.y, z * a.x - x * a.z, y * a.z - z * a.y }; }
 	float magnitude() { return sqrt(x * x + y * y + z * z); }
@@ -179,6 +180,7 @@ struct mat3x3
 
 
 	}
+
 	bool operator ==(const mat3x3& a) const
 	{
 		for (int i = 0; i < 3; i++)
@@ -777,5 +779,123 @@ struct spco3 {
 				}
 			}
 		}
+	}
+};
+//source for different conversion for 3D rotations:https://gamemath.com/book/orient.html#converting_between_forms
+/// <summary>
+/// quaternion made out of a scalar w and a vec3
+
+/// </summary>
+struct qua4
+{
+	float w;
+	vec3 v;
+	qua4() :
+		w(0)
+	{
+
+	}
+	qua4(float w, float x, float y, float z) :
+		w(w),
+		v(x, y, z)
+	{
+
+	}
+	const float tolerance = 0.0001f;
+	void operator =(const qua4& a) { w = a.w; v = a.v; }
+
+	bool operator ==(const qua4& a) const { return MathFunctions::areEqualRel(v.x, a.v.x, tolerance) && MathFunctions::areEqualRel(v.y, a.v.y, tolerance) && MathFunctions::areEqualRel(v.z, a.v.z, tolerance) && MathFunctions::areEqualRel(w, a.w, tolerance); }
+
+};
+struct RotationConversions
+{
+	/// <summary>
+	/// Creates a 3x3 matrix from a quaternion
+	/// </summary>
+	/// <returns></returns>
+	static mat3x3 Qua4ToMat3x3(const qua4 q)
+	{
+		mat3x3 m;
+		for (int i = 0; i < 3; i++)
+		{
+			float exceptI = 0;
+			for (int j = 0; j < 3; j++)
+			{
+				if (j != i)
+				{
+					exceptI += 2 * q.v[j] * q.v[j];
+				}
+
+			}
+			m.m[i][i] = 1 - exceptI;
+		}
+		//hardcoded values maybe add them to the loop
+		m.m[0][1] = 2 * (q.v.x * q.v.y - q.w * q.v.z);
+		m.m[0][2] = 2 * (q.v.x * q.v.z + q.w * q.v.y);
+
+		m.m[1][0] = 2 * (q.v.x * q.v.y + q.w * q.v.z);
+		m.m[1][2] = 2 * (q.v.y * q.v.z - q.w * q.v.x);
+
+		m.m[2][0] = 2 * (q.v.x * q.v.z - q.w * q.v.y);
+		m.m[2][1] = 2 * (q.v.y * q.v.z + q.w * q.v.x);
+		return m;
+	}
+	//upright-to-object quaternion
+	static vec3 Qua4ToEulerAnglesToObject(const qua4 q)
+	{
+		vec3 euler;
+
+		// Extract sin(pitch)
+		float sp = -2.0f * (q.v.y * q.v.z + q.w * q.v.x);
+
+		// Check for Gimbal lock, giving slight tolerance
+		// for numerical imprecision
+		if (fabs(sp) > 0.9999f) {
+
+			// Looking straight up or down
+			euler.y = 1.570796f * sp; // pi/2
+
+			// Compute heading, slam bank to zero
+			euler.x = atan2(-q.v.x * q.v.z - q.w * q.v.y, 0.5f - q.v.y * q.v.y - q.v.z * q.v.z);
+			euler.z = 0.0f;
+
+		}
+		else {
+
+			// Compute angles
+			euler.y = asin(sp);
+			euler.x = atan2(q.v.x * q.v.z - q.w * q.v.y, 0.5f - q.v.x * q.v.x - q.v.y * q.v.y);
+			euler.z = atan2(q.v.x * q.v.y - q.w * q.v.z, 0.5f - q.v.x * q.v.x - q.v.z * q.v.z);
+		}
+		return  euler;
+	}
+	//object-to-upright
+	static vec3 Qua4ToEulerAnglesToUpright(const qua4 q)
+	{
+		vec3 euler;
+
+		// Extract sin(pitch)
+		const float sp = -2.0f * (q.v.y * q.v.z - q.w * q.v.x);
+
+		// Check for Gimbal lock, giving slight tolerance
+		// for numerical imprecision
+		if (fabs(sp) > 0.999f) {
+
+			// Looking straight up or down
+			euler.y = 1.570796f * sp; // pi/2
+
+			// Compute heading, slam bank to zero
+			euler.x = atan2(-q.v.x * q.v.z + q.w * q.v.y, 0.5f - q.v.y * q.v.y - q.v.z * q.v.z);
+			euler.z = 0.0f;
+
+		}
+		else {
+
+			// Compute angles
+			euler.y = asin(sp);
+			euler.x = atan2(q.v.x * q.v.z + q.w * q.v.y, 0.5f - q.v.x * q.v.x - q.v.y * q.v.y);
+			euler.z = atan2(q.v.x * q.v.y + q.w * q.v.z, 0.5f - q.v.x * q.v.x - q.v.z * q.v.z);
+		}
+		return  euler;
 	}
 };
